@@ -1,7 +1,7 @@
 use std::fs::File;
 use std::io;
 use std::io::{BufRead, BufReader};
-use std::time::SystemTime;
+use std::time::{SystemTime, Duration};
 
 use structopt::StructOpt;
 
@@ -10,7 +10,7 @@ use ddo::implementation::mdd::config::config_builder;
 use ddo::implementation::mdd::aggressively_bounded::AggressivelyBoundedMDD;
 use ddo::implementation::solver::parallel::ParallelSolver;
 use ddo::implementation::frontier::NoForgetFrontier;
-use ddo::implementation::heuristics::NbUnassignedWitdh;
+use ddo::implementation::heuristics::{NbUnassignedWitdh, TimeBudget};
 
 use crate::graph::Graph;
 use crate::model::Minla;
@@ -24,29 +24,30 @@ mod graph;
 struct Opt {
     /// Path to the instance (*.gra | *.dimacs)
     fname: String,
-    /// The number of threads to use (default: number of physical threads on this machine)
-    #[structopt(name="threads", short, long)]
-    threads: Option<usize>
+    /// If specified, the maximum time allowed
+    #[structopt(name="time", short, long)]
+    time: Option<u64>
 }
 
 fn main() {
     let opt = Opt::from_args();
 
-    let threads = opt.threads.unwrap_or_else(num_cpus::get);
+    let time = opt.time.unwrap_or(u64::max_value());
     let problem = read_file(&opt.fname).unwrap();
     let relax = MinlaRelax::new(&problem);
     let cfg = config_builder(&problem, relax)
+        .with_cutoff(TimeBudget::new(Duration::from_secs(time)))
         .with_max_width(NbUnassignedWitdh)
         .build();
     let mdd = AggressivelyBoundedMDD::from(cfg);
-    let mut solver  = ParallelSolver::customized(mdd, 2, threads)
+    let mut solver  = ParallelSolver::customized(mdd, 2, num_cpus::get())
         .with_frontier(NoForgetFrontier::default());
 
     let start = SystemTime::now();
     let opt = solver.maximize().best_value.unwrap_or(isize::min_value());
     let end = SystemTime::now();
 
-    println!("Optimum {} computed in {:?} with {} threads", opt, end.duration_since(start).unwrap(), threads);
+    println!("Best {} computed in {:?}", opt, end.duration_since(start).unwrap());
 }
 
 fn read_file(fname: &str) -> Result<Minla, io::Error> {
