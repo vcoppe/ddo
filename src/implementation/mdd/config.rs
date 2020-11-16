@@ -67,6 +67,7 @@ use crate::implementation::mdd::shallow::pooled::PooledMDD;
 /// #    fn relax_edge(&self, src: &usize, dst: &usize, relaxed: &usize, decision: Decision, cost: isize) -> isize {
 /// #      cost
 /// #    }
+/// #    fn default_relaxed_state(&self) -> usize { usize::max_value() }
 /// # }
 /// let problem = MockProblem;
 /// let relax   = MockRelax;
@@ -120,6 +121,7 @@ pub fn mdd_builder<T, PB, RLX>(pb: &PB, rlx: RLX) -> ConfigurationBuilder<T, PB,
 /// #    fn relax_edge(&self, src: &usize, dst: &usize, relaxed: &usize, decision: Decision, cost: isize) -> isize {
 /// #      cost
 /// #    }
+/// #    fn default_relaxed_state(&self) -> usize { usize::max_value() }
 /// # }
 /// let problem = MockProblem;
 /// let relax   = MockRelax;
@@ -188,6 +190,7 @@ pub fn config_builder<T, PB, RLX>(pb: &PB, rlx: RLX) -> ConfigurationBuilder<T, 
 /// #    fn relax_edge(&self, src: &usize, dst: &usize, relaxed: &usize, decision: Decision, cost: isize) -> isize {
 /// #      cost
 /// #    }
+/// #    fn default_relaxed_state(&self) -> usize { usize::max_value() }
 /// # }
 /// let problem = MockProblem;
 /// let relax   = MockRelax;
@@ -475,6 +478,11 @@ impl <'x, T, P, R, L, V, W, S, C> Config<T> for PassThroughConfig<'x, T, P, R, L
     #[inline]
     fn estimate(&self, state: &T) -> isize {
         self.relax.estimate(state)
+    }
+
+    #[inline]
+    fn default_relaxed_state(&self) -> T {
+        self.relax.default_relaxed_state()
     }
 
     /// Returns the minimal set of free variables for the given `problem` when

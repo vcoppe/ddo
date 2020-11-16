@@ -94,6 +94,9 @@ type Layer<T> = MetroHashMap<Rc<T>, Rc<Node<T>>>;
 /// #   fn relax_edge(&self, _: &usize, _: &usize, _: &usize, _: Decision, _: isize) -> isize {
 /// #       unimplemented!()
 /// #   }
+/// #   fn default_relaxed_state(&self) -> usize {
+/// #       unimplemented!()
+/// #   }
 /// # }
 /// let problem    = MockProblem;
 /// let relaxation = MockRelax;
@@ -594,6 +597,7 @@ mod test_flatmdd {
         fn estimate(&self, _state: &usize) -> isize {
             50
         }
+        fn default_relaxed_state(&self) -> usize { 100 }
     }
 
     #[test]

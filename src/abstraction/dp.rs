@@ -103,6 +103,7 @@ pub trait Relaxation<T> {
     /// RUB returns the greatest positive integer; which is always safe but does
     /// not provide any pruning.
     fn estimate  (&self, _state  : &T) -> isize {isize::max_value()}
+    fn default_relaxed_state(&self) -> T;
 }
 
 
@@ -138,6 +139,7 @@ mod test_problem_defaults {
         fn relax_edge(&self, _: &usize, _: &usize, _: &usize, _: Decision, _: isize) -> isize {
             unimplemented!()
         }
+        fn default_relaxed_state(&self) -> usize { unimplemented!() }
     }
 
     #[test]

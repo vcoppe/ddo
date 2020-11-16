@@ -398,6 +398,7 @@ mod test_hybrid_flat_deep {
         fn estimate(&self, _state: &usize) -> isize {
             50
         }
+        fn default_relaxed_state(&self) -> usize { 100 }
     }
 
     #[test]
@@ -802,6 +803,7 @@ mod test_hybrid_pooled_deep {
         fn estimate(&self, _state: &usize) -> isize {
             50
         }
+        fn default_relaxed_state(&self) -> usize { 100 }
     }
 
     #[test]

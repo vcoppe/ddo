@@ -109,6 +109,7 @@ pub trait Config<T> {
     /// RUB returns the greatest positive integer; which is always safe but does
     /// not provide any pruning.
     fn estimate  (&self, _state  : &T) -> isize {isize::max_value()}
+    fn default_relaxed_state(&self) -> T;
 
     // ------------------------------------------------------------------------
     // --- The Heuristics -----------------------------------------------------

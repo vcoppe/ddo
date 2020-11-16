@@ -7,6 +7,7 @@ use structopt::StructOpt;
 
 use ddo::abstraction::solver::Solver;
 use ddo::implementation::mdd::config::config_builder;
+use ddo::implementation::mdd::aggressively_bounded::AggressivelyBoundedMDD;
 use ddo::implementation::solver::parallel::ParallelSolver;
 use ddo::implementation::frontier::NoForgetFrontier;
 use ddo::implementation::heuristics::NbUnassignedWitdh;
@@ -34,9 +35,10 @@ fn main() {
     let threads = opt.threads.unwrap_or_else(num_cpus::get);
     let problem = read_file(&opt.fname).unwrap();
     let relax = MinlaRelax::new(&problem);
-    let mdd = config_builder(&problem, relax)
+    let cfg = config_builder(&problem, relax)
         .with_max_width(NbUnassignedWitdh)
-        .into_deep();
+        .build();
+    let mdd = AggressivelyBoundedMDD::from(cfg);
     let mut solver  = ParallelSolver::customized(mdd, 2, threads)
         .with_frontier(NoForgetFrontier::default());
 

@@ -114,6 +114,7 @@ impl Relaxation<usize> for MockRelax {
     fn estimate(&self, state: &usize) -> isize {
         self.estimate.called(*state)
     }
+    fn default_relaxed_state(&self) -> usize { 0 }
 }
 
 #[derive(Clone)]
@@ -276,6 +277,10 @@ impl Config<usize> for MockConfig {
         self.estimate.called(*state)
     }
 
+    fn default_relaxed_state(&self) -> usize {
+        0
+    }
+
     fn load_variables(&self, node: &FrontierNode<usize>) -> VarSet {
         self.load_vars.called(node.clone())
     }
@@ -319,6 +324,8 @@ impl <X, T: Relaxation<X> + Clone> Relaxation<X> for Proxy<'_, T> {
     fn estimate(&self, state: &X) -> isize {
         self.target.estimate(state)
     }
+
+    fn default_relaxed_state(&self) -> X { self.target.default_relaxed_state() }
 }
 impl <X, T: LoadVars<X> + Clone> LoadVars<X> for Proxy<'_, T> {
     fn variables(&self, node: &FrontierNode<X>) -> VarSet {
@@ -377,6 +384,10 @@ impl <X, T: Config<X> + Clone> Config<X> for Proxy<'_, T> {
 
     fn estimate(&self, state: &X) -> isize {
         self.target.estimate(state)
+    }
+
+    fn default_relaxed_state(&self) -> X {
+        self.target.default_relaxed_state()
     }
 
     fn load_variables(&self, node: &FrontierNode<X>) -> VarSet {

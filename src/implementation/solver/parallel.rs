@@ -542,6 +542,8 @@ mod test_solver {
         fn relax_edge(&self, _src: &usize, _dst: &usize, _relaxed: &usize, _d: Decision, cost: isize) -> isize {
             cost
         }
+
+        fn default_relaxed_state(&self) -> usize { usize::max_value() }
     }
 
     #[test]

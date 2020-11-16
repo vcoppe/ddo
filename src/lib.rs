@@ -119,6 +119,8 @@
 //!     fn relax_edge(&self, src: &usize, dst: &usize, relaxed: &usize, d: Decision, cost: isize) -> isize {
 //!         cost
 //!     }
+//!
+//!     fn default_relaxed_state(&self) -> usize { usize::max_value() }
 //! }
 //! ```
 //!
@@ -186,6 +188,8 @@
 //! #     fn relax_edge(&self, src: &usize, dst: &usize, relaxed: &usize, d: Decision, cost: isize) -> isize {
 //! #         cost
 //! #     }
+//! #
+//! #     fn default_relaxed_state(&self) -> usize { usize::max_value() }
 //! # }
 //! // 1. Create an instance of our knapsack problem
 //! let problem = Knapsack {

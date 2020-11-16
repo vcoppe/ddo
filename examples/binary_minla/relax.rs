@@ -9,12 +9,20 @@ use std::cmp::Reverse;
 
 #[derive(Debug, Clone)]
 pub struct MinlaRelax<'a> {
-    pb: &'a Minla
+    pb: &'a Minla,
+    default_relaxed_state: State
 }
 
 impl <'a> MinlaRelax<'a> {
     pub fn new(pb : &'a Minla) -> MinlaRelax<'a> {
-        MinlaRelax{pb}
+        MinlaRelax {
+            pb,
+            default_relaxed_state: State {
+                free: BitSet::new(0),
+                cut: vec![0; pb.nb_vars()],
+                m: 0
+            }
+        }
     }
 
     fn edge_lb(&self, n : isize, m : isize) -> isize {
@@ -75,5 +83,9 @@ impl <'a> Relaxation<State> for MinlaRelax<'a> {
 
     fn estimate(&self, state: &State) -> isize {
         self.ub(&state.free, &state)
+    }
+
+    fn default_relaxed_state(&self) -> State {
+        self.default_relaxed_state.clone()
     }
 }

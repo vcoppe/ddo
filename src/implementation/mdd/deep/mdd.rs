@@ -536,6 +536,7 @@ mod test_deepmdd {
         fn estimate(&self, _state: &usize) -> isize {
             50
         }
+        fn default_relaxed_state(&self) -> usize { 100 }
     }
     // In an exact setup, the dummy problem would be 3*3*3 = 9 large at the bottom level
     #[test]
@@ -910,6 +911,8 @@ mod test_deepmdd {
         fn relax_edge(&self, _: &char, _: &char, _: &char, _: Decision, cost: isize) -> isize {
             cost
         }
+
+        fn default_relaxed_state(&self) -> char { 'M' }
     }
 
     #[derive(Clone, Copy)]

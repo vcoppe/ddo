@@ -80,6 +80,9 @@ use std::rc::Rc;
 /// #   fn relax_edge(&self, _: &usize, _: &usize, _: &usize, _: Decision, _: isize) -> isize {
 /// #       unimplemented!()
 /// #   }
+/// #   fn default_relaxed_state(&self) -> usize {
+/// #       unimplemented!()
+/// #   }
 /// # }
 /// let problem    = MockProblem;
 /// let relaxation = MockRelax;
@@ -573,6 +576,7 @@ mod test_pooledmdd {
         fn estimate(&self, _state: &usize) -> isize {
             50
         }
+        fn default_relaxed_state(&self) -> usize { 100 }
     }
     #[test]
     fn exact_no_cutoff_completion_must_be_coherent_with_outcome() {

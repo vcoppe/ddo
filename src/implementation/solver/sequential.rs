@@ -64,6 +64,7 @@ use crate::implementation::frontier::SimpleFrontier;
 /// #     fn relax_edge(&self, _src: &usize, _dst: &usize, _rlx: &usize, _d: Decision, cost: isize) -> isize {
 /// #        cost
 /// #     }
+/// #     fn default_relaxed_state(&self) -> usize { usize::max_value() }
 /// # }
 /// let problem    = MockProblem;
 /// let relaxation = MockRelax;
@@ -329,6 +330,8 @@ mod test_solver {
         fn relax_edge(&self, _src: &usize, _dst: &usize, _relaxed: &usize, _d: Decision, cost: isize) -> isize {
             cost
         }
+
+        fn default_relaxed_state(&self) -> usize { usize::max_value() }
     }
 
     #[test]
