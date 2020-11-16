@@ -267,13 +267,15 @@ impl <T, C, F, DD> ParallelSolver<T, C, F, DD>
     /// best lower bound from the critical data. Then it expands a restricted
     /// and possibly a relaxed mdd rooted in `node`. If that is necessary,
     /// it stores cutset nodes onto the fringe for further parallel processing.
-    fn process_one_node(mdd: &mut DD, shared: &Arc<Shared<T, F>>, node: FrontierNode<T>) -> Result<(), Reason> {
-        // 1. RESTRICTION
-        let (best_lb, best_ub) = Self::refresh_bounds(shared);
-        let restriction = mdd.restricted(&node, best_lb, best_ub)?;
-        Self::maybe_update_best(mdd, shared);
-        if restriction.is_exact {
-            return Ok(());
+    fn process_one_node(mdd: &mut DD, shared: &Arc<Shared<T, F>>, node: FrontierNode<T>, explored: usize) -> Result<(), Reason> {
+        if explored < 1000 || explored % 1000 == 0 {
+            // 1. RESTRICTION
+            let (best_lb, best_ub) = Self::refresh_bounds(shared);
+            let restriction = mdd.restricted(&node, best_lb, best_ub)?;
+            Self::maybe_update_best(mdd, shared);
+            if restriction.is_exact {
+                return Ok(());
+            }
         }
 
         // 2. RELAXATION
@@ -412,7 +414,7 @@ impl <T, C, F, DD> Solver for ParallelSolver<T, C, F, DD>
                             WorkLoad::Starvation => continue,
                             WorkLoad::WorkItem {must_log, explored, fringe_sz, best_lb, current_ub, node} => {
                                 Self::maybe_log(verbosity, must_log, explored, fringe_sz, best_lb, current_ub);
-                                let outcome = Self::process_one_node(&mut mdd, &shared, node);
+                                let outcome = Self::process_one_node(&mut mdd, &shared, node, explored);
                                 if let Err(reason) = outcome {
                                     Self::abort_search(&shared, reason);
                                     Self::notify_node_finished(&shared, i);
