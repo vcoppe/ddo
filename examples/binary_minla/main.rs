@@ -10,11 +10,12 @@ use ddo::implementation::mdd::config::config_builder;
 use ddo::implementation::mdd::aggressively_bounded::AggressivelyBoundedMDD;
 use ddo::implementation::solver::parallel::ParallelSolver;
 use ddo::implementation::frontier::NoForgetFrontier;
-use ddo::implementation::heuristics::{NbUnassignedWitdh, TimeBudget};
+use ddo::implementation::heuristics::{TimeBudget, FixedWidth};
 
 use crate::graph::Graph;
 use crate::model::Minla;
 use crate::relax::MinlaRelax;
+use ddo::abstraction::dp::Problem;
 
 mod model;
 mod relax;
@@ -37,7 +38,7 @@ fn main() {
     let relax = MinlaRelax::new(&problem);
     let cfg = config_builder(&problem, relax)
         .with_cutoff(TimeBudget::new(Duration::from_secs(time)))
-        .with_max_width(NbUnassignedWitdh)
+        .with_max_width(FixedWidth(problem.nb_vars() * problem.nb_vars()))
         .build();
     let mdd = AggressivelyBoundedMDD::from(cfg);
     let mut solver  = ParallelSolver::customized(mdd, 2, num_cpus::get())

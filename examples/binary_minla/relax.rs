@@ -1,10 +1,9 @@
-use bitset_fixed::BitSet;
-
 use ddo::abstraction::dp::{Problem, Relaxation};
-use ddo::common::Decision;
+use ddo::common::{Decision, BitSetIter};
 
 use crate::model::{Minla, State};
 
+use bitset_fixed::BitSet;
 use std::cmp::Reverse;
 
 #[derive(Debug, Clone)]
@@ -41,6 +40,17 @@ impl <'a> MinlaRelax<'a> {
         edge_lb
     }
 
+    fn degree_lb(&self, vertices : &BitSet, state : &State) -> isize {
+        let mut deg_lb = 0;
+
+        for k in BitSetIter::new(&vertices) {
+            let d = self.pb.deg[k] - state.cut[k];
+            deg_lb += (d * d + 2 * d + d % 2) / 4;
+        }
+
+        (deg_lb + 1) / 2
+    }
+
     fn cut_lb(&self, state : &State) -> isize {
         let mut cuts = state.cut.clone();
 
@@ -64,7 +74,7 @@ impl <'a> MinlaRelax<'a> {
         if n == 0 {
             0
         } else {
-            - self.cut_lb(state) - self.edge_lb(n, state.m)
+            - self.cut_lb(state) - self.edge_lb(n, state.m).max(self.degree_lb(vertices, state))
         }
     }
 }
