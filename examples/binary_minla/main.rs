@@ -5,21 +5,37 @@ use std::time::{SystemTime, Duration};
 
 use structopt::StructOpt;
 
+use ddo::common::VarSet;
 use ddo::abstraction::solver::Solver;
+use ddo::abstraction::heuristics::WidthHeuristic;
 use ddo::implementation::mdd::config::config_builder;
 use ddo::implementation::mdd::aggressively_bounded::AggressivelyBoundedMDD;
 use ddo::implementation::solver::parallel::ParallelSolver;
 use ddo::implementation::frontier::NoForgetFrontier;
-use ddo::implementation::heuristics::{TimeBudget, FixedWidth};
+use ddo::implementation::heuristics::{TimeBudget};
 
 use crate::graph::Graph;
 use crate::model::Minla;
 use crate::relax::MinlaRelax;
-use ddo::abstraction::dp::Problem;
 
 mod model;
 mod relax;
 mod graph;
+
+#[derive(Debug, Copy, Clone)]
+pub struct NFullLayers(pub usize);
+impl WidthHeuristic for NFullLayers {
+    fn max_width(&self, free: &VarSet) -> usize {
+        let n = free.len();
+        let mut w = n;
+        for k in 1..self.0 {
+            if n - k == 0 { break; }
+            w *= n - k;
+        }
+        w
+    }
+}
+
 
 #[derive(StructOpt)]
 struct Opt {
@@ -38,7 +54,7 @@ fn main() {
     let relax = MinlaRelax::new(&problem);
     let cfg = config_builder(&problem, relax)
         .with_cutoff(TimeBudget::new(Duration::from_secs(time)))
-        .with_max_width(FixedWidth(problem.nb_vars() * problem.nb_vars()))
+        .with_max_width(NFullLayers(2))
         .build();
     let mdd = AggressivelyBoundedMDD::from(cfg);
     let mut solver  = ParallelSolver::customized(mdd, 2, num_cpus::get())
