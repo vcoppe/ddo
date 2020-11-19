@@ -47,7 +47,7 @@ fn main() {
     // Compute primal solution
     let primal_relax = MinlaRelax::new(&problem);
     let primal_mdd = config_builder(&problem, primal_relax)
-        .with_max_width(FixedWidth(problem.nb_vars() / 2))
+        .with_max_width(FixedWidth(problem.nb_vars()))
         .with_cutoff(FindFirst)
         .into_deep();
 

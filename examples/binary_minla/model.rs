@@ -5,7 +5,6 @@ use bitset_fixed::BitSet;
 
 use ddo::common::{BitSetIter, Decision, Domain, Variable, VarSet};
 use ddo::abstraction::dp::Problem;
-use std::cmp::Reverse;
 
 #[derive(Debug, Clone)]
 pub struct State {
@@ -74,12 +73,10 @@ impl Problem<State> for Minla {
         if n == 0 { // relaxed node with empty free vertices intersection
             Domain::from(vec![self.no_vertex() as isize])
         } else {
-            //Domain::from(&state.free)
             let mut order = vec![];
             for i in BitSetIter::new(&state.free) {
                 order.push((i, state.cut[i], self.deg[i]));
             }
-            //order.sort_unstable_by_key(|(_,a,b)| (Reverse(*a),*b));
             order.sort_unstable_by_key(|(_,a,b)| b-a);
             Domain::from(order.iter().map(|&a| a.0 as isize).collect::<Vec<_>>())
         }
