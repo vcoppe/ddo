@@ -9,7 +9,7 @@ use ddo::abstraction::solver::Solver;
 use ddo::implementation::mdd::config::config_builder;
 use ddo::implementation::mdd::aggressively_bounded::AggressivelyBoundedMDD;
 use ddo::implementation::solver::parallel::ParallelSolver;
-use ddo::implementation::frontier::NoForgetFrontier;
+use ddo::implementation::frontier::NoDupFrontier;
 use ddo::implementation::heuristics::{TimeBudget, FixedWidth};
 
 use crate::graph::Graph;
@@ -59,7 +59,7 @@ fn main() {
 
     let mdd = AggressivelyBoundedMDD::from(cfg);
     let mut solver  = ParallelSolver::customized(mdd, 2, num_cpus::get())
-        .with_frontier(NoForgetFrontier::default());
+        .with_frontier(NoDupFrontier::default());
     if sol.is_some() {
         solver.set_primal(val.unwrap(), sol.unwrap());
     }
