@@ -268,7 +268,7 @@ impl <T, C, F, DD> ParallelSolver<T, C, F, DD>
     /// and possibly a relaxed mdd rooted in `node`. If that is necessary,
     /// it stores cutset nodes onto the fringe for further parallel processing.
     fn process_one_node(mdd: &mut DD, shared: &Arc<Shared<T, F>>, node: FrontierNode<T>, explored: usize) -> Result<(), Reason> {
-        if explored % 1000 == 0 {
+        if explored < 1000 || explored % 1000 == 0 {
             // 1. RESTRICTION
             let (best_lb, best_ub) = Self::refresh_bounds(shared);
             let restriction = mdd.restricted(&node, best_lb, best_ub)?;

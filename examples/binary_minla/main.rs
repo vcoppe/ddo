@@ -10,7 +10,7 @@ use ddo::implementation::mdd::config::config_builder;
 use ddo::implementation::mdd::aggressively_bounded::AggressivelyBoundedMDD;
 use ddo::implementation::solver::parallel::ParallelSolver;
 use ddo::implementation::frontier::NoForgetFrontier;
-use ddo::implementation::heuristics::{TimeBudget, FixedWidth, FindFirst};
+use ddo::implementation::heuristics::{TimeBudget, FixedWidth};
 
 use crate::graph::Graph;
 use crate::model::Minla;
@@ -47,11 +47,11 @@ fn main() {
     // Compute primal solution
     let primal_relax = MinlaRelax::new(&problem);
     let primal_mdd = config_builder(&problem, primal_relax)
-        .with_max_width(FixedWidth(problem.nb_vars()))
-        .with_cutoff(FindFirst)
+        .with_max_width(FixedWidth(problem.nb_vars() / 2))
+        .with_cutoff(TimeBudget::new(Duration::from_secs(60)))
         .into_deep();
 
-    let mut primal_solver = ParallelSolver::new(primal_mdd);
+    let mut primal_solver = ParallelSolver::customized(primal_mdd, 2, num_cpus::get());
     primal_solver.maximize();
 
     let sol = primal_solver.best_solution();
@@ -60,7 +60,9 @@ fn main() {
     let mdd = AggressivelyBoundedMDD::from(cfg);
     let mut solver  = ParallelSolver::customized(mdd, 2, num_cpus::get())
         .with_frontier(NoForgetFrontier::default());
-    solver.set_primal(val.unwrap(), sol.unwrap());
+    if sol.is_some() {
+        solver.set_primal(val.unwrap(), sol.unwrap());
+    }
 
     let start = SystemTime::now();
     let opt = solver.maximize().best_value.unwrap_or(isize::min_value());
