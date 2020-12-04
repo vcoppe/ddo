@@ -3,7 +3,7 @@ use std::ops::Not;
 
 use bitset_fixed::BitSet;
 
-use ddo::common::{Decision, Domain, Variable, VarSet};
+use ddo::common::{Decision, Domain, Variable, VarSet, BitSetIter};
 use ddo::abstraction::dp::Problem;
 use std::cmp::Reverse;
 
@@ -28,29 +28,11 @@ impl Hash for State {
 #[derive(Debug, Clone)]
 pub struct Srflp {
     pub g : Vec<Vec<isize>>,
-    pub l : Vec<isize>,
-    pub edges : Vec<(isize,usize,usize)>,
-    pub lengths : Vec<(isize,usize)>,
+    pub l : Vec<isize>
 }
 impl Srflp {
     pub fn new(g : Vec<Vec<isize>>, l : Vec<isize>) -> Srflp {
-        let mut edges = vec![];
-        let mut lengths = vec![];
-        for (i, is) in g.iter().enumerate() {
-            for (j, js) in is.iter().enumerate() {
-                if i < j {
-                    edges.push((*js, i, j));
-                }
-            }
-            lengths.push((l[i], i));
-        }
-        edges.sort_unstable_by_key(|&x| Reverse(x.0));
-        lengths.sort_unstable();
-        Srflp { g, l, edges, lengths }
-    }
-
-    fn no_vertex(&self) -> usize {
-        self.nb_vars()
+        Srflp { g, l }
     }
 }
 impl Problem<State> for Srflp {
@@ -71,30 +53,34 @@ impl Problem<State> for Srflp {
     }
 
     fn domain_of<'a>(&self, state: &'a State, _var: Variable) -> Domain<'a> {
-        let n = state.free.count_ones() as usize;
-        if n == 0 { // relaxed node with empty free vertices intersection
-            Domain::from(vec![self.no_vertex() as isize])
-        } else {
-            Domain::from(&state.free)
-        }
+        Domain::from(&state.free)
     }
 
-    fn transition(&self, state: &State, _vars: &VarSet, d: Decision) -> State {
+    fn transition(&self, state: &State, vars: &VarSet, d: Decision) -> State {
         let i = d.value as usize;
 
         let mut result = state.clone();
 
-        if i != self.no_vertex() {
-            result.free.set(i as usize, false);
-            result.cuts[i] = 0;
+        result.free.set(i, false);
+        result.cuts[i] = 0;
 
-            for j in 0..self.nb_vars() {
-                if state.free[j] {
-                    result.cut += self.g[i][j];
-                    result.cuts[j] += self.g[i][j];
-                } else {
-                    result.cut -= self.g[i][j];
-                }
+        if state.free.count_ones() == 1 + vars.len() as u32 {
+            result.cut -= state.cuts[i];
+            for j in BitSetIter::new(&state.free) {
+                result.cut += self.g[i][j];
+                result.cuts[j] += self.g[i][j];
+            }
+        } else { // relaxed state
+            let mut cuts = vec![];
+            for j in BitSetIter::new(&state.free) {
+                result.cuts[j] += self.g[i][j];
+                cuts.push(result.cuts[j]);
+            }
+            // compute cut as the sum of the smallest cut values for remaining spots
+            cuts.sort_unstable();
+            result.cut = 0;
+            for j in 0..vars.len() {
+                result.cut += cuts[j];
             }
         }
 
@@ -104,10 +90,6 @@ impl Problem<State> for Srflp {
     fn transition_cost(&self, state: &State, _vars: &VarSet, d: Decision) -> isize {
         let i = d.value as usize;
 
-        if i == self.no_vertex() {
-            0
-        } else {
-            - self.l[i] * (state.cut - state.cuts[i])
-        }
+        - self.l[i] * (state.cut - state.cuts[i]).max(0)
     }
 }
