@@ -1,11 +1,10 @@
 use ddo::abstraction::dp::{Relaxation, Problem};
-use ddo::common::{Decision, BitSetIter};
+use ddo::common::Decision;
 
 use crate::model::{Srflp, State};
 
 use bitset_fixed::BitSet;
 use std::cmp::Reverse;
-use std::ops::BitOrAssign;
 
 #[derive(Debug, Clone)]
 pub struct SrflpRelax<'a> {
@@ -24,36 +23,50 @@ impl <'a> SrflpRelax<'a> {
             }
         }
     }
+
+    fn ub(&self, state: &State) -> isize {
+        let n = state.free.count_ones() as usize;
+        let mut cuts = state.cuts.clone();
+
+        cuts.sort_unstable_by_key(|&x| Reverse(x));
+
+        let mut edge_lb = 0;
+        let mut cut_lb = 0;
+        let mut cumul_l = 0;
+        let mut edge_idx = 0;
+        let mut length_idx = 0;
+        for i in 0..n {
+            for _ in 0..(n-i-1) {
+                while !state.free[self.pb.edges[edge_idx].1] || !state.free[self.pb.edges[edge_idx].2] {
+                    edge_idx += 1;
+                }
+                edge_lb += cumul_l * self.pb.edges[edge_idx].0;
+                edge_idx += 1;
+            }
+
+            cut_lb += cumul_l * cuts[i];
+
+            while !state.free[self.pb.lengths[length_idx].1] {
+                length_idx += 1;
+            }
+            cumul_l += self.pb.lengths[length_idx].0;
+            length_idx += 1;
+        }
+
+        - edge_lb - cut_lb
+    }
 }
 impl <'a> Relaxation<State> for SrflpRelax<'a> {
-    fn merge_states(&self, states: &mut dyn Iterator<Item=&State>) -> State {
-        let mut free = BitSet::new(self.pb.nb_vars());
-        let mut cut = isize::max_value();
-        let mut cuts = vec![isize::max_value(); self.pb.nb_vars()];
-
-        for state in states {
-            free.bitor_assign(&state.free);
-            cut = cut.min(state.cut);
-            for i in BitSetIter::new(&state.free) {
-                cuts[i] = cuts[i].min(state.cuts[i]);
-            }
-        }
-
-        for i in 0..self.pb.nb_vars() {
-            if !free[i] {
-                cuts[i] = 0;
-            }
-        }
-
-        State { free, cut, cuts }
+    fn merge_states(&self, _states: &mut dyn Iterator<Item=&State>) -> State {
+        self.default_relaxed_state.clone()
     }
 
     fn relax_edge(&self, _src: &State, dst: &State, _relaxed: &State, _decision: Decision, cost: isize) -> isize {
-        cost // + self.ub(&dst)
+        cost + self.ub(&dst)
     }
 
     fn estimate(&self, state : &State) -> isize {
-        0 // self.ub(&state)
+        self.ub(&state)
     }
 
     fn default_relaxed_state(&self) -> State {
