@@ -53,8 +53,8 @@ fn main() {
     let end = SystemTime::now();
 
     for i in 0..problem.nb_vars() {
-        for j in (i+1)..problem.nb_vars() {
-            opt -= 0.5 * ((problem.g[i][j] * (problem.l[i] + problem.l[j])) as f32);
+        for j in 0..problem.nb_vars() {
+            opt -= 0.5 * ((problem.g[i][j] * problem.l[i]) as f32);
         }
     }
 
