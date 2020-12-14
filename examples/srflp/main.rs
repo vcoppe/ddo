@@ -8,6 +8,7 @@ use regex::Regex;
 
 use ddo::abstraction::solver::Solver;
 use ddo::implementation::mdd::config::config_builder;
+use ddo::implementation::mdd::aggressively_bounded::AggressivelyBoundedMDD;
 use ddo::implementation::frontier::NoDupFrontier;
 use ddo::implementation::heuristics::{TimeBudget, FixedWidth};
 use ddo::implementation::solver::parallel::ParallelSolver;
@@ -38,11 +39,12 @@ fn main() {
     let time = opt.time.unwrap_or(u64::max_value());
     let problem = read_file(&opt.fname).unwrap();
     let relax = SrflpRelax::new(&problem);
-    let mdd = config_builder(&problem, relax)
+    let cfg = config_builder(&problem, relax)
         .with_cutoff(TimeBudget::new(Duration::from_secs(time)))
         .with_max_width(FixedWidth(opt.width.unwrap_or(problem.nb_vars())))
-        .into_deep();
+        .build();
 
+    let mdd = AggressivelyBoundedMDD::from(cfg);
     let mut solver  = ParallelSolver::customized(mdd, 2, num_cpus::get())
         .with_frontier(NoDupFrontier::default());
 
